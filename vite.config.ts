@@ -22,15 +22,6 @@ export default defineConfig(({mode}) => {
     },
     build: {
       chunkSizeWarningLimit: 1000,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-utils': ['lucide-react', 'framer-motion', 'clsx', 'tailwind-merge'],
-            'vendor-charts': ['recharts', 'd3'],
-          },
-        },
-      },
     },
   };
 });
