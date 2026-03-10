@@ -64,7 +64,8 @@ function cleanMarkdown(text: string): string {
 }
 
 export async function getComprehensiveAnalysis(info: BirthInfo, bazi: BaziData, astrology: AstrologyData): Promise<ComprehensiveAnalysis> {
-  const model = "gemini-3.1-pro-preview";
+  // Use Flash by default for better stability and speed in shared environments
+  const model = "gemini-3-flash-preview";
   const today = new Date().toISOString().split('T')[0];
   const prompt = `你是一位精通东西方命理的顶级大师。请根据以下信息，为用户生成一份全方位的命理分析报告。
   
@@ -134,15 +135,25 @@ export async function getComprehensiveAnalysis(info: BirthInfo, bazi: BaziData, 
         }
       }
     });
-    const data = JSON.parse(response.text);
-    if (data.baziAnalysis) data.baziAnalysis = cleanMarkdown(data.baziAnalysis);
-    if (data.astrologyAnalysis) data.astrologyAnalysis = cleanMarkdown(data.astrologyAnalysis);
-    return data;
+
+    if (!response || !response.text) {
+      throw new Error("AI 未返回有效内容");
+    }
+
+    try {
+      const data = JSON.parse(response.text);
+      if (data.baziAnalysis) data.baziAnalysis = cleanMarkdown(data.baziAnalysis);
+      if (data.astrologyAnalysis) data.astrologyAnalysis = cleanMarkdown(data.astrologyAnalysis);
+      return data;
+    } catch (parseError) {
+      console.error("JSON Parse Error:", response.text);
+      throw new Error("AI 返回的数据格式解析失败");
+    }
   });
 }
 
 export async function getDailyFortune(info: BirthInfo, bazi: BaziData, astrology: AstrologyData): Promise<FortuneData> {
-  const model = "gemini-3.1-pro-preview";
+  const model = "gemini-3-flash-preview";
   const today = new Date().toISOString().split('T')[0];
   const prompt = `你是一位精通东西方命理的运势分析专家。请根据以下信息，为用户生成一份今日（${today}）的详细运势报告。
   出生信息：${info.date} ${info.time}, 性别：${info.gender}
@@ -181,7 +192,7 @@ export async function getDailyFortune(info: BirthInfo, bazi: BaziData, astrology
 }
 
 export async function analyzeBazi(info: BirthInfo, data: BaziData) {
-  const model = "gemini-3.1-pro-preview";
+  const model = "gemini-3-flash-preview";
   const prompt = `你是一个玄学算命大师 研究多年 精通紫薇天象，给很多富豪看过运势，给你我的生辰和地址 你帮我算算吧：
   出生信息：${info.date} ${info.time}, 性别：${info.gender}
   八字：
@@ -211,7 +222,7 @@ export async function analyzeBazi(info: BirthInfo, data: BaziData) {
 }
 
 export async function analyzeAstrology(info: BirthInfo, data: AstrologyData) {
-  const model = "gemini-3.1-pro-preview";
+  const model = "gemini-3-flash-preview";
   const prompt = `你是一位精通西方占星学的占星师。请根据以下星盘信息进行深度分析：
   出生信息：${info.date} ${info.time}, 性别：${info.gender}
   行星位置：
