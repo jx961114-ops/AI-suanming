@@ -49,14 +49,14 @@ export default function App() {
 
   useEffect(() => {
     const checkKey = async () => {
-      const key = process.env.GEMINI_API_KEY || process.env.API_KEY;
-      if (!key) {
-        setApiKeyMissing(true);
-      }
+      // Check for shared key
+      const sharedKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
       
-      if (window.aistudio?.hasSelectedApiKey) {
-        const selected = await window.aistudio.hasSelectedApiKey();
-        setHasUserKey(selected);
+      // If shared key doesn't exist, we consider the key missing
+      if (!sharedKey) {
+        setApiKeyMissing(true);
+      } else {
+        setApiKeyMissing(false);
       }
     };
     
@@ -155,31 +155,11 @@ export default function App() {
               </div>
               <div className="flex-1 text-center md:text-left">
                 <p className="font-bold text-lg">未检测到有效的 API 密钥</p>
-                <p className="text-red-700/80">当前环境未配置共享密钥，或者共享配额已耗尽。请点击右侧按钮选择您的个人 API 密钥以继续使用 AI 功能。</p>
+                <p className="text-red-700/80">当前环境未配置 API 密钥。请在系统设置中配置 GEMINI_API_KEY 以启用 AI 功能。</p>
               </div>
-              <button
-                onClick={handleSelectKey}
-                className="whitespace-nowrap px-6 py-3 bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-200 hover:bg-red-700 transition-colors"
-              >
-                选择 API 密钥
-              </button>
             </div>
           )}
 
-          {!apiKeyMissing && !hasUserKey && (
-            <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl flex items-center justify-between gap-4 mb-8">
-              <div className="flex items-center gap-3 text-indigo-800 text-sm">
-                <Sparkles size={18} />
-                <span>正在使用共享 API 密钥。如果遇到响应缓慢或配额错误，建议切换至个人密钥。</span>
-              </div>
-              <button
-                onClick={handleSelectKey}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 underline underline-offset-4"
-              >
-                切换个人密钥
-              </button>
-            </div>
-          )}
           {error && (
             <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3 text-amber-800 animate-in fade-in slide-in-from-top-4">
               <Sparkles className="shrink-0 mt-0.5" size={18} />
@@ -274,16 +254,6 @@ export default function App() {
             </nav>
 
             <div className="pt-4 border-t border-gray-50 space-y-2">
-              <button
-                onClick={handleSelectKey}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-                  hasUserKey ? 'text-green-600 hover:bg-green-50' : 'text-indigo-600 hover:bg-indigo-50'
-                }`}
-              >
-                <Sparkles size={18} />
-                {hasUserKey ? '已连接个人密钥' : '使用个人密钥'}
-              </button>
-
               {showConfirmReset ? (
               <div className="p-3 bg-red-50 rounded-2xl border border-red-100 space-y-3 mt-2 animate-in fade-in zoom-in duration-200">
                 <p className="text-xs text-red-600 font-bold text-center">确定要清除所有数据吗？</p>
