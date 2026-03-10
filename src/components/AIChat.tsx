@@ -48,6 +48,24 @@ export default function AIChat({ info, bazi, astrology }: AIChatProps) {
     localStorage.setItem('chatHistory', JSON.stringify(messages));
   }, [messages]);
 
+  // Fetch suggestions on mount or when messages change (if empty)
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (suggestions.length === 0 && !loading) {
+        try {
+          const nextSuggestions = await getFollowUpQuestions(info, bazi, astrology, messages);
+          setSuggestions(nextSuggestions.map(s => s.length > 20 ? s.substring(0, 17) + '...' : s));
+        } catch (e) {
+          console.error('Failed to fetch suggestions', e);
+        }
+      }
+    };
+
+    // Delay slightly to ensure messages are loaded from localStorage
+    const timer = setTimeout(fetchSuggestions, 500);
+    return () => clearTimeout(timer);
+  }, [messages.length, loading, info, bazi, astrology]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
