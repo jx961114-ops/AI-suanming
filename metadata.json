@@ -1,0 +1,5 @@
+{
+  "name": "AI 命理分析平台",
+  "description": "一个支持 东方八字 + 西方占星 的 AI 命理分析与人生决策助手。",
+  "requestFramePermissions": []
+}
