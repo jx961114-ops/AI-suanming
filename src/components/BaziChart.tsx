@@ -71,7 +71,7 @@ export default function BaziChart({ data }: BaziChartProps) {
             </motion.div>
           ))}
         </div>
-        <p className="text-[10px] text-gray-400 text-center">注：八字以立春为岁首，以节令换月，以23:00（子时）换日。</p>
+        <p className="text-[10px] text-gray-400 text-center">注：八字以立春为岁首，以节令换月。</p>
       </div>
 
       {/* Five Elements Distribution */}
