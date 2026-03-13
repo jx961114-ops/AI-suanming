@@ -84,10 +84,21 @@ export function calculateBazi(info: BirthInfo): BaziData {
   };
 
   // Helper to calculate common Shen Sha
-  const calculateShenSha = (pillarStem: string, pillarBranch: string, dayStem: string, dayBranch: string, yearStem: string, yearBranch: string, pillarType: 'year' | 'month' | 'day' | 'hour', pillarGanZhi: string, gender: 'male' | 'female', allBranches: string[]) => {
+  const calculateShenSha = (pillarStem: string, pillarBranch: string, dayStem: string, dayBranch: string, yearStem: string, yearBranch: string, pillarType: 'year' | 'month' | 'day' | 'hour', pillarGanZhi: string, gender: 'male' | 'female', allBranches: string[], yearNaYin: string, pillarNaYin: string) => {
     const shas: string[] = [];
     
-    // 1. 天乙贵人 (Tian Yi) - Based on Day Stem or Year Stem
+    const getStemElem = (s: string) => {
+      if ('甲乙'.includes(s)) return '木';
+      if ('丙丁'.includes(s)) return '火';
+      if ('戊己'.includes(s)) return '土';
+      if ('庚辛'.includes(s)) return '金';
+      if ('壬癸'.includes(s)) return '水';
+      return '';
+    };
+
+    const pillarNaYinElem = pillarNaYin.charAt(pillarNaYin.length - 1);
+    const dayStemElem = getStemElem(dayStem);
+    const yearStemElem = getStemElem(yearStem);
     const tianYiMap: { [key: string]: string[] } = {
       '甲': ['丑', '未'], '戊': ['丑', '未'], '庚': ['丑', '未'],
       '乙': ['子', '申'], '己': ['子', '申'],
@@ -158,19 +169,20 @@ export function calculateBazi(info: BirthInfo): BaziData {
     };
     if (huaGaiMap[dayBranch] === pillarBranch || huaGaiMap[yearBranch] === pillarBranch) shas.push('华盖');
 
-    // 10. 将星 (Jiang Xing) - Strict Rule: Must have full San He Ju
-    const sanHeGroups = [
-      ['申', '子', '辰'],
-      ['寅', '午', '戌'],
-      ['巳', '酉', '丑'],
-      ['亥', '卯', '未']
-    ];
-    const middleBranches: { [key: string]: string } = { '子': '申辰', '午': '寅戌', '酉': '巳丑', '卯': '亥未' };
+    // 10. 将星 (Jiang Xing) - Based on Year/Day branch
+    const jiangXingMap: { [key: string]: string } = {
+      '申': '子', '子': '子', '辰': '子',
+      '寅': '午', '午': '午', '戌': '午',
+      '巳': '酉', '酉': '酉', '丑': '酉',
+      '亥': '卯', '卯': '卯', '未': '卯'
+    };
     
-    if (middleBranches[pillarBranch]) {
-      const group = sanHeGroups.find(g => g.includes(pillarBranch))!;
-      const hasFullGroup = group.every(b => allBranches.includes(b));
-      if (hasFullGroup) shas.push('将星');
+    // Rule: If Day Branch is base, check Year, Month, Hour. If Year Branch is base, check Month, Day, Hour.
+    const isJiangXingFromDay = pillarType !== 'day' && jiangXingMap[dayBranch] === pillarBranch;
+    const isJiangXingFromYear = pillarType !== 'year' && jiangXingMap[yearBranch] === pillarBranch;
+    
+    if (isJiangXingFromDay || isJiangXingFromYear) {
+      shas.push('将星');
     }
 
     // 11. 劫煞 (Jie Sha)
@@ -233,17 +245,49 @@ export function calculateBazi(info: BirthInfo): BaziData {
     };
     if (fuXingMap[dayStem]?.includes(pillarBranch) || fuXingMap[yearStem]?.includes(pillarBranch)) shas.push('福星贵人');
 
-    // 17. 学堂 (Xue Tang) & 词馆 (Ci Guan)
-    const xueTangMap: { [key: string]: string } = {
-      '甲': '亥', '乙': '午', '丙': '寅', '丁': '酉', '戊': '寅', '己': '酉', '庚': '巳', '辛': '子', '壬': '申', '癸': '卯'
-    };
-    const ciGuanMap: { [key: string]: string } = {
-      '甲': '寅', '乙': '卯', '丙': '巳', '丁': '午', '戊': '巳', '己': '午', '庚': '申', '辛': '酉', '壬': '亥', '癸': '子'
-    };
-    if (xueTangMap[dayStem] === pillarBranch) shas.push('学堂');
-    if (ciGuanMap[dayStem] === pillarBranch) shas.push('词馆');
+    // 17. 正学堂 (Zheng Xue Tang) - Based on Year Branch and Day Stem
+    if (pillarType === 'day') {
+      const yearSanHe = {
+        '寅午戌': ['丙', '丁'],
+        '申子辰': ['壬', '癸'],
+        '巳酉丑': ['庚', '辛'],
+        '亥卯未': ['甲', '乙']
+      };
+      for (const [branches, stems] of Object.entries(yearSanHe)) {
+        if (branches.includes(yearBranch) && stems.includes(dayStem)) {
+          shas.push('正学堂');
+          break;
+        }
+      }
+    }
 
-    // 18. 六厄 (Liu E)
+    // 18. 词馆 (Ci Guan) - Based on Year/Day Stem matching specific GanZhi (User's strict list)
+    const ciGuanMap: { [key: string]: string } = {
+      '甲': '庚寅', '乙': '辛卯', '丙': '乙巳', '丁': '戊午', '戊': '丁巳', '己': '庚午', '庚': '壬申', '辛': '癸酉', '壬': '癸亥', '癸': '壬戌'
+    };
+    const isCiGuanMatch = (stem: string, stemElem: string) => {
+      return ciGuanMap[stem] === pillarGanZhi && pillarNaYinElem === stemElem;
+    };
+    if (isCiGuanMatch(dayStem, dayStemElem) || isCiGuanMatch(yearStem, yearStemElem)) {
+      shas.push('词馆');
+    }
+
+    // 19. 学堂 (Xue Tang) - Based on Year/Day Na Yin Chang Sheng
+    const xueTangNaYinMap: { [key: string]: string } = {
+      '木': '亥', '火': '寅', '土': '申', '金': '巳', '水': '申'
+    };
+    
+    // Check against Year Na Yin (as requested before)
+    const yearNaYinElem = yearNaYin.charAt(yearNaYin.length - 1);
+    if (pillarType !== 'year' && xueTangNaYinMap[yearNaYinElem] === pillarBranch) {
+      shas.push('学堂');
+    }
+    
+    // Check against Day Na Yin (if we want to be thorough based on "Year or Day" logic)
+    // However, the user's latest prompt specifically mentions the GanZhi list for "Xue Tang Ci Guan"
+    // So we'll stick to the provided list for Ci Guan and the Na Yin logic for Xue Tang.
+
+    // 20. 六厄 (Liu E)
     const liuEMap: { [key: string]: string } = {
       '申': '卯', '子': '卯', '辰': '卯',
       '寅': '亥', '午': '亥', '戌': '亥',
@@ -348,6 +392,10 @@ export function calculateBazi(info: BirthInfo): BaziData {
   };
 
   const allBranches = [yearBranch, monthBranch, dayBranch, hourBranch];
+  const yearNaYin = lunar.getYearNaYin();
+  const monthNaYin = lunar.getMonthNaYin();
+  const dayNaYin = lunar.getDayNaYin();
+  const hourNaYin = lunar.getTimeNaYin();
 
   return {
     year: { 
@@ -356,7 +404,7 @@ export function calculateBazi(info: BirthInfo): BaziData {
       element: yearEl.stem,
       tenGod: eightChar.getYearShiShenGan(),
       hiddenStems: getHiddenStems(eightChar.getYearHideGan(), eightChar.getYearShiShenZhi()),
-      shenSha: calculateShenSha(yearStem, yearBranch, dayStem, dayBranch, yearStem, yearBranch, 'year', yearStr, info.gender, allBranches)
+      shenSha: calculateShenSha(yearStem, yearBranch, dayStem, dayBranch, yearStem, yearBranch, 'year', yearStr, info.gender, allBranches, yearNaYin, yearNaYin)
     },
     month: { 
       stem: monthStem, 
@@ -364,7 +412,7 @@ export function calculateBazi(info: BirthInfo): BaziData {
       element: monthEl.stem,
       tenGod: eightChar.getMonthShiShenGan(),
       hiddenStems: getHiddenStems(eightChar.getMonthHideGan(), eightChar.getMonthShiShenZhi()),
-      shenSha: calculateShenSha(monthStem, monthBranch, dayStem, dayBranch, yearStem, yearBranch, 'month', monthStr, info.gender, allBranches)
+      shenSha: calculateShenSha(monthStem, monthBranch, dayStem, dayBranch, yearStem, yearBranch, 'month', monthStr, info.gender, allBranches, yearNaYin, monthNaYin)
     },
     day: { 
       stem: dayStem, 
@@ -372,7 +420,7 @@ export function calculateBazi(info: BirthInfo): BaziData {
       element: dayEl.stem,
       tenGod: '日主',
       hiddenStems: getHiddenStems(eightChar.getDayHideGan(), eightChar.getDayShiShenZhi()),
-      shenSha: calculateShenSha(dayStem, dayBranch, dayStem, dayBranch, yearStem, yearBranch, 'day', dayStr, info.gender, allBranches)
+      shenSha: calculateShenSha(dayStem, dayBranch, dayStem, dayBranch, yearStem, yearBranch, 'day', dayStr, info.gender, allBranches, yearNaYin, dayNaYin)
     },
     hour: { 
       stem: hourStem, 
@@ -380,7 +428,7 @@ export function calculateBazi(info: BirthInfo): BaziData {
       element: hourEl.stem,
       tenGod: eightChar.getTimeShiShenGan(),
       hiddenStems: getHiddenStems(eightChar.getTimeHideGan(), eightChar.getTimeShiShenZhi()),
-      shenSha: calculateShenSha(hourStem, hourBranch, dayStem, dayBranch, yearStem, yearBranch, 'hour', hourStr, info.gender, allBranches)
+      shenSha: calculateShenSha(hourStem, hourBranch, dayStem, dayBranch, yearStem, yearBranch, 'hour', hourStr, info.gender, allBranches, yearNaYin, hourNaYin)
     },
     fiveElements,
     dayMaster: dayStem,
