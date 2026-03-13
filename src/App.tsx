@@ -147,7 +147,7 @@ export default function App() {
     
     if (page === 'home') {
       return (
-        <div className="space-y-12 py-6">
+        <div className="space-y-12 pt-20 pb-12">
           {apiKeyMissing && (
             <div className="bg-red-50 border border-red-200 p-6 rounded-3xl flex flex-col md:flex-row items-center gap-6 text-red-800 mb-8">
               <div className="bg-red-100 p-3 rounded-2xl">
@@ -217,7 +217,7 @@ export default function App() {
     if (!birthInfo || !baziData || !astrologyData) return null;
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 py-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-10 pb-12">
         {/* Sidebar Nav */}
         <div className="lg:col-span-3 space-y-4">
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
@@ -236,7 +236,7 @@ export default function App() {
                 { id: 'bazi', label: '八字命盘', icon: <LayoutDashboard size={18} /> },
                 { id: 'astrology', label: '西方星盘', icon: <Compass size={18} /> },
                 { id: 'chat', label: 'AI 算命', icon: <MessageSquare size={18} /> },
-                { id: 'fortune', label: '运势报告', icon: <CalendarDays size={18} /> },
+                { id: 'fortune', label: '今日运势', icon: <CalendarDays size={18} /> },
               ].map(item => (
                 <button
                   key={item.id}

@@ -71,6 +71,8 @@ export async function getComprehensiveAnalysis(info: BirthInfo, bazi: BaziData, 
   
   出生信息：${info.date} ${info.time}, 性别：${info.gender}
   八字：${bazi.year.stem}${bazi.year.branch} ${bazi.month.stem}${bazi.month.branch} ${bazi.day.stem}${bazi.day.branch} ${bazi.hour.stem}${bazi.hour.branch}
+  大运：${bazi.daYun?.items.map(i => `${i.age}岁${i.stem}${i.branch}`).join(', ')}
+  流年：${bazi.liuNian?.map(i => `${i.year}年${i.stem}${i.branch}`).join(', ')}
   星盘摘要：${astrology.planets.map(p => `${p.name}${p.sign}`).join(', ')}
   
   请生成以下三个部分的内容：
@@ -158,6 +160,8 @@ export async function getDailyFortune(info: BirthInfo, bazi: BaziData, astrology
   const prompt = `你是一位精通东西方命理的运势分析专家。请根据以下信息，为用户生成一份今日（${today}）的详细运势报告。
   出生信息：${info.date} ${info.time}, 性别：${info.gender}
   八字：${bazi.year.stem}${bazi.year.branch} ${bazi.month.stem}${bazi.month.branch} ${bazi.day.stem}${bazi.day.branch} ${bazi.hour.stem}${bazi.hour.branch}
+  大运：${bazi.daYun?.items.map(i => `${i.age}岁${i.stem}${i.branch}`).join(', ')}
+  流年：${bazi.liuNian?.map(i => `${i.year}年${i.stem}${i.branch}`).join(', ')}
   星盘摘要：${astrology.planets.map(p => `${p.name}${p.sign}`).join(', ')}
   
   请严格按照JSON格式返回，包含以下字段：
@@ -200,6 +204,8 @@ export async function analyzeBazi(info: BirthInfo, data: BaziData) {
   月柱：${data.month.stem}${data.month.branch} (${data.month.element})
   日柱：${data.day.stem}${data.day.branch} (${data.day.element})
   时柱：${data.hour.stem}${data.hour.branch} (${data.hour.element})
+  大运：${data.daYun?.items.map(i => `${i.age}岁${i.stem}${i.branch}`).join(', ')}
+  流年：${data.liuNian?.map(i => `${i.year}年${i.stem}${i.branch}`).join(', ')}
   五行分布：${JSON.stringify(data.fiveElements)}
   日主：${data.dayMaster}
   
@@ -269,6 +275,8 @@ export async function chatWithAI(
   ${modeInstruction}
   用户的出生信息：${info.date} ${info.time}, 性别：${info.gender}
   八字：${bazi.year.stem}${bazi.year.branch} ${bazi.month.stem}${bazi.month.branch} ${bazi.day.stem}${bazi.day.branch} ${bazi.hour.stem}${bazi.hour.branch}
+  大运：${bazi.daYun?.items.map(i => `${i.age}岁${i.stem}${i.branch}`).join(', ')}
+  流年：${bazi.liuNian?.map(i => `${i.year}年${i.stem}${i.branch}`).join(', ')}
   星盘摘要：${astrology.planets.map(p => `${p.name}${p.sign}`).join(', ')}
   
   请以专业、温和、富有洞察力的语气回答用户的问题。`;

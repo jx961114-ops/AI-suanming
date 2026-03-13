@@ -8,6 +8,8 @@ export function calculateBazi(info: BirthInfo): BaziData {
   const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0);
   const lunar = solar.getLunar();
   const eightChar = lunar.getEightChar();
+  // 使用流派2，以晚子时（23:00）作为日界，这是八字命理的通用标准
+  eightChar.setSect(2);
 
   // Get stems and branches
   const yearStr = eightChar.getYear();
@@ -48,18 +50,79 @@ export function calculateBazi(info: BirthInfo): BaziData {
     if (fiveElements[el] !== undefined) fiveElements[el]++;
   });
 
+  // Calculate Da Yun
+  const gender = info.gender === 'male' ? 1 : 0;
+  const yun = eightChar.getYun(gender);
+  const daYunList = yun.getDaYun();
+  
+  const daYunItems = daYunList.map(dy => {
+    const ganZhi = dy.getGanZhi();
+    return {
+      age: dy.getStartAge(),
+      year: dy.getStartYear(),
+      stem: ganZhi.charAt(0),
+      branch: ganZhi.charAt(1)
+    };
+  }).slice(1, 9); // Get 8 cycles, skip the first "0 age" one if it's just a placeholder
+
+  // Calculate Liu Nian (Current year and next 9 years)
+  const currentYear = new Date().getFullYear();
+  const liuNianItems = [];
+  for (let i = 0; i < 10; i++) {
+    const year = currentYear + i;
+    // 使用该年6月1日的日期来获取该年的干支，确保在立春之后且在下一年立春之前
+    const gz = Lunar.fromYmd(year, 6, 1).getYearInGanZhi();
+    liuNianItems.push({
+      year,
+      stem: gz.charAt(0),
+      branch: gz.charAt(1)
+    });
+  }
+
+  const getHiddenStems = (hides: string[], shiShens: string[]) => {
+    return hides.map((stem, i) => ({ stem, tenGod: shiShens[i] }));
+  };
+
   return {
-    year: { stem: yearStem, branch: yearBranch, element: yearEl.stem },
-    month: { stem: monthStem, branch: monthBranch, element: monthEl.stem },
-    day: { stem: dayStem, branch: dayBranch, element: dayEl.stem },
-    hour: { stem: hourStem, branch: hourBranch, element: hourEl.stem },
+    year: { 
+      stem: yearStem, 
+      branch: yearBranch, 
+      element: yearEl.stem,
+      tenGod: eightChar.getYearShiShenGan(),
+      hiddenStems: getHiddenStems(eightChar.getYearHideGan(), eightChar.getYearShiShenZhi()),
+      shenSha: []
+    },
+    month: { 
+      stem: monthStem, 
+      branch: monthBranch, 
+      element: monthEl.stem,
+      tenGod: eightChar.getMonthShiShenGan(),
+      hiddenStems: getHiddenStems(eightChar.getMonthHideGan(), eightChar.getMonthShiShenZhi()),
+      shenSha: []
+    },
+    day: { 
+      stem: dayStem, 
+      branch: dayBranch, 
+      element: dayEl.stem,
+      tenGod: '日主',
+      hiddenStems: getHiddenStems(eightChar.getDayHideGan(), eightChar.getDayShiShenZhi()),
+      shenSha: []
+    },
+    hour: { 
+      stem: hourStem, 
+      branch: hourBranch, 
+      element: hourEl.stem,
+      tenGod: eightChar.getTimeShiShenGan(),
+      hiddenStems: getHiddenStems(eightChar.getTimeHideGan(), eightChar.getTimeShiShenZhi()),
+      shenSha: []
+    },
     fiveElements,
-    tenGods: [
-      eightChar.getYearShiShenGan(),
-      eightChar.getMonthShiShenGan(),
-      eightChar.getDayShiShenGan(),
-      eightChar.getTimeShiShenGan()
-    ],
-    dayMaster: dayStem
+    dayMaster: dayStem,
+    daYun: {
+      startAge: yun.getStartYear(),
+      startYear: yun.getStartSolar().getYear(),
+      items: daYunItems
+    },
+    liuNian: liuNianItems
   };
 }

@@ -5,14 +5,28 @@ export interface BirthInfo {
   gender: 'male' | 'female';
 }
 
+export interface BaziColumn {
+  stem: string;
+  branch: string;
+  element: string;
+  tenGod: string;
+  hiddenStems: { stem: string; tenGod: string }[];
+  shenSha: string[];
+}
+
 export interface BaziData {
-  year: { stem: string; branch: string; element: string };
-  month: { stem: string; branch: string; element: string };
-  day: { stem: string; branch: string; element: string };
-  hour: { stem: string; branch: string; element: string };
+  year: BaziColumn;
+  month: BaziColumn;
+  day: BaziColumn;
+  hour: BaziColumn;
   fiveElements: { [key: string]: number };
-  tenGods: string[];
   dayMaster: string;
+  daYun?: {
+    startAge: number;
+    startYear: number;
+    items: { age: number; year: number; stem: string; branch: string }[];
+  };
+  liuNian?: { year: number; stem: string; branch: string }[];
 }
 
 export interface AstrologyData {
